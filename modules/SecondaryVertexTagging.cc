@@ -97,6 +97,7 @@ private:
   rave::Vector6D getState(const Candidate*);
   rave::Vector6D getAltState(Candidate*);
   rave::PerigeeCovariance5D getPerigeeCov(const Candidate*);
+  rave::PerigeeCovariance5D getPerigeeCovEigen(const Candidate*);
   double getRho(double pt_in_gev, int charge); // return in cm^-1
   double getRhoAlt(double qoverp, double theta);
   double getQOverP(double rho, double theta);
@@ -679,6 +680,53 @@ rave::Vector6D RaveConverter::getAltState(Candidate* trk) {
 }
 
 rave::PerigeeCovariance5D RaveConverter::getPerigeeCov(const Candidate* cand) {
+  using namespace TrackParam;
+  // -- translate to Rave coordinates
+  // rave base units are cm and GeV, Delphes takes mm and GeV
+  // need to calculate some things for the jacobian
+  const float* par = cand->trkPar;
+  double drdq = getDrhoDqoverp(par[THETA]);
+  double drdt = getDrhoDtheta(par[QOVERP], par[THETA]);
+
+  const float* cov0 = cand->trkCov;
+  float cov[15];
+  for (size_t iii = 0; iii < 15; iii++) {
+    cov[iii] = cov0[iii] * _cov_scaling;
+  }
+  float qq = cov[QOVERPQOVERP];
+  float qt = cov[QOVERPTHETA];
+  float tt = cov[THETATHETA];
+
+  // now multiply out the J*cov*J^T
+  float drr = drdq*drdq*qq + drdt*drdt*tt + 2*drdt*drdq*qt;
+  float drt = drdt*tt + drdq*qt;
+
+  float drp = cov[QOVERPPHI]*drdq + cov[THETAPHI]*drdt;
+  float dtt = cov[THETATHETA];
+  float dtp = cov[THETAPHI];
+  float dpp = cov[PHIPHI];
+  rave::PerigeeCovariance3D cov3d(drr, drt, drp, dtt, dtp, dpp);
+
+  // now the remaining terms. lengths need to be converted to cm
+  float dre = (cov[QOVERPD0]*drdq + cov[THETAD0]*drdt) * 0.1;
+  float drz = (cov[QOVERPZ0]*drdq + cov[THETAZ0]*drdt) * 0.1;
+  float dte = cov[THETAD0]  * 0.1;
+  float dtz = cov[THETAZ0]  * 0.1;
+  float dpe = cov[PHID0]    * 0.1;
+  float dpz = cov[PHIZ0]    * 0.1;
+  float dee = cov[D0D0]     * 0.01;
+  float dez = cov[Z0D0]     * 0.01;
+  float dzz = cov[Z0Z0]     * 0.01;
+  rave::PerigeeCovariance5D cov5d(cov3d,
+				  dre, drz,
+				  dte, dtz,
+				  dpe, dpz,
+				  dee, dez, dzz);
+  return cov5d;
+}
+
+rave::PerigeeCovariance5D RaveConverter::getPerigeeCovEigen(
+  const Candidate* cand) {
   using namespace TrackParam;
   // -- translate to Rave coordinates
   // rave base units are cm and GeV, Delphes takes mm and GeV

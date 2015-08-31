@@ -258,7 +258,7 @@ void TreeWriter::ProcessVertices(ExRootTreeBranch *branch, TObjArray *array)
 // debug function
 bool compare(double quant1, double quant2, std::string thing) {
   double diff = quant1 - quant2;
-  if (std::abs(diff) < 1e-15) return true;
+  if (std::abs(diff) < 1e-13) return true;
   double rel_diff = diff / quant1;
   if ( std::abs(rel_diff) > 0.000000001 ) {
     std::cerr << thing << " " << quant1 << " " << quant2 << std::endl;
@@ -267,8 +267,10 @@ bool compare(double quant1, double quant2, std::string thing) {
   return true;
 }
 bool check_d0_z0(Track* track) {
-  if (!compare(track->Zd, track->trkPar[TrackParam::Z0], "Z0")) return false;
-  if (!compare(track->Dxy, track->trkPar[TrackParam::D0], "d0")) return false;
+  double hypot = std::hypot(track->Xd, track->Yd);
+  if (!compare(hypot, std::abs(track->trkPar[TrackParam::D0]), "d0")) {
+    return false;
+  }
   return true;
 }
 

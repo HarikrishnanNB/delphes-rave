@@ -192,18 +192,18 @@ void IPCovSmearing::Process()
     yd =  track->Yd;
     zd =  track->Zd;
 
-    // NOTE: the phi used here isn't _strictly_ correct, since it doesn't
-    //       extrapolate all the way to the interaction point.
-    //       We're using it for consistency with the rest of Delphes, though.
-    double phid0 = phi - pi/2;
+    // the delphes track parameters aren't strictly accurate, since
+    // they don't extrapolate to perigee.
+    float* track_par_array = track->trkPar;
+    double phid0 = track_par_array[TrackParam::PHI] - pi/2;
 
     // Compute qoverp and theta: Because matrix parametrisation is for
     // (d0,z0,phi,theta,qoverp)
-    double qoverp = charge/(pt*cosh(eta));
-    double theta = 2.*std::atan(std::exp(-eta));
+    double qoverp = track_par_array[TrackParam::QOVERP];
+    double theta = track_par_array[TrackParam::THETA];
 
     // calculate impact parameter (_before_ smearing)
-    double d0 = (xd*py - yd*px)/pt;
+    double d0 = track_par_array[TrackParam::D0];
     double z0 = zd;
 
     // get pt and eta bins (TODO: replace with something less confusing)

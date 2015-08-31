@@ -306,13 +306,22 @@ void ParticlePropagator::Process()
         float qoverp = 1./(pt*cosh(eta));
         float theta = 2.*TMath::ATan(TMath::Exp(-eta));
         if(q<1E-9) qoverp *= -1;
- 
+
+	// use perigee momentum rather than original particle
+	// momentum, since the orignal particle momentum isn't known
+	double r_sign = std::signbit(r) ? 1 : -1;
+	double px_p = r_sign * pt * (y_c / r_c);
+	double py_p = r_sign * pt * (-x_c / r_c);
+	double phi_p = std::atan2(py_p, px_p);
+	std::cout << px_p << " " << px << std::endl;
+
         float* trkPar = candidate->trkPar;
-        trkPar[D0]    = (xd*py - yd*px)/pt * 1e3;
+        trkPar[D0]    = (xd*py_p - yd*px_p)/pt * 1e3;
         trkPar[Z0]    = zd * 1e3;
-        trkPar[PHI]   = candidateMomentum.Phi();
+        trkPar[PHI]   = phi_p;
         trkPar[THETA] = theta;
         trkPar[QOVERP]= qoverp;
+	// std::cout << dxy << " " << trkPar[D0] << std::endl;
 
         candidate->AddCandidate(mother);
 

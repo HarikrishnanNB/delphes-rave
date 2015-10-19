@@ -41,6 +41,10 @@
 #include <string>
 #include <limits>
 
+// #include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/device/file.hpp>
+
 namespace {
   // double inf = std::numeric_limits<double>::infinity();
   std::string remove_extension(const std::string& filename) {
@@ -54,8 +58,9 @@ namespace {
 
 HDF5Writer::HDF5Writer() :
   fItInputArray(0), m_out_file(0), m_hl_jet_buffer(0),
-  m_ml_jet_buffer(0)
+  m_ml_jet_buffer(0), m_output_stream(0)
 {
+  m_output_stream = new boost::iostreams::filtering_ostream;
 }
 
 //------------------------------------------------------------------------------
@@ -66,6 +71,7 @@ HDF5Writer::~HDF5Writer()
   delete m_hl_jet_buffer;
   delete m_ml_jet_buffer;
   delete fItInputArray;
+  delete m_output_stream;
 }
 
 //------------------------------------------------------------------------------
@@ -106,7 +112,9 @@ void HDF5Writer::Init()
   // create the output text file
   std::string text_file_ext = GetString("TextFileExtension", "");
   if (text_file_ext.size() > 0) {
-    m_output_stream.open(output_file + text_file_ext);
+    namespace io = boost::iostreams;
+    m_output_stream->push(io::gzip_compressor());
+    m_output_stream->push(io::file_sink(output_file + text_file_ext));
   }
 }
 
@@ -280,10 +288,6 @@ void HDF5Writer::Finish()
 
   m_ml_jet_buffer->flush();
   m_ml_jet_buffer->close();
-
-  if (m_output_stream.is_open()) {
-    m_output_stream.close();
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -295,8 +299,8 @@ void HDF5Writer::Process()
   while ((jet = static_cast<Candidate*>(fItInputArray->Next()))) {
     const auto& mom = jet->Momentum;
     if (mom.Pt() < fPTMin || std::abs(mom.Eta()) > fAbsEtaMax) continue;
-    if (m_output_stream.is_open()) {
-      m_output_stream << out::SuperJet(*jet) << "\n";
+    if (m_output_stream->is_complete()) {
+      *m_output_stream << out::SuperJet(*jet) << "\n";
     }
     m_hl_jet_buffer->push_back(*jet);
     m_ml_jet_buffer->push_back(*jet);

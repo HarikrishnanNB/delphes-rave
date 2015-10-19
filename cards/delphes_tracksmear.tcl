@@ -629,7 +629,7 @@ module TreeWriter TreeWriter {
 module HDF5Writer HDF5Writer {
   set JetInputArray UniqueObjectFinder/jets
   set OutputExtension .ntuple.h5
-  set TextFileExtension .ntuple.txt
+  set TextFileExtension .ntuple.txt.gz
   set PTMin 20
   set AbsEtaMax 2.5
 }

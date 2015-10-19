@@ -49,6 +49,9 @@ class HighLevelSvx;
 
 #include "H5Cpp.h"
 
+// stuff to compress output stream
+#include <boost/iostreams/filtering_stream.hpp>
+
 namespace out {
 
   // high-level
@@ -168,6 +171,11 @@ namespace out {
 namespace H5 {
   class H5File;
 }
+namespace boost {
+  namespace iostreams {
+    class filtering_ostream;
+  }
+}
 
 #endif
 
@@ -196,10 +204,10 @@ private:
 #ifndef __CINT__
   OneDimBuffer<out::HighLevelJet>* m_hl_jet_buffer;
   OneDimBuffer<out::MediumLevelJet>* m_ml_jet_buffer;
+  boost::iostreams::filtering_ostream* m_output_stream;
 #endif
-  std::ofstream m_output_stream;
 
-  ClassDef(HDF5Writer, 1)
+  ClassDef(HDF5Writer, 2)
 };
 
 #endif

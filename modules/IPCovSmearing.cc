@@ -72,6 +72,7 @@ namespace {
 //------------------------------------------------------------------------------
 
 IPCovSmearing::IPCovSmearing() :
+  fNBinMisses(0),
   fItInputArray(0)
 {
 }

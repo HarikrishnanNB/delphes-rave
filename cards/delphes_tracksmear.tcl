@@ -8,6 +8,7 @@ set MaxEvents 10
 # scaling for vertexing and tracking smearing / covariance
 set TrackSmear 1.0
 set CovScale 1.0
+set ParamFile /data11/home/dguest/substructure/calibration/Parametrisation/IDParametrisierung.root
 
 set ExecutionPath {
   ParticlePropagator
@@ -213,14 +214,14 @@ module IPCovSmearing TrackParSmearing {
   set OutputArray tracks
 
   set SmearingMultiple $TrackSmear
-  set SmearParamFile Parametrisation/IDParametrisierung.root
+  set SmearParamFile $ParamFile
 }
 module IPCovSmearing ElectronTrackingSmearing {
   set InputArray ElectronTrackingEfficiency/electrons
   set OutputArray electrons
 
   set SmearingMultiple $TrackSmear
-  set SmearParamFile Parametrisation/IDParametrisierung.root
+  set SmearParamFile $ParamFile
 
 }
 module IPCovSmearing MuonTrackingSmearing {
@@ -228,7 +229,7 @@ module IPCovSmearing MuonTrackingSmearing {
   set OutputArray muons
 
   set SmearingMultiple $TrackSmear
-  set SmearParamFile Parametrisation/IDParametrisierung.root
+  set SmearParamFile $ParamFile
 }
 
 #############

@@ -658,6 +658,7 @@ tmp/modules/HDF5Writer.$(ObjSuf): \
 	modules/HDF5Writer.$(SrcSuf) \
 	modules/HDF5Writer.h \
 	external/h5/h5types.hh \
+	external/flavortag/SecondaryVertex.hh \
 	classes/DelphesClasses.h \
 	external/ExRootAnalysis/ExRootConfReader.h \
 	external/ExRootAnalysis/ExRootTreeWriter.h
@@ -824,6 +825,7 @@ tmp/modules/SecondaryVertexTagging.$(ObjSuf): \
 	modules/SecondaryVertexTagging.$(SrcSuf) \
 	modules/SecondaryVertexTagging.h \
 	external/flavortag/math.hh \
+	external/flavortag/SecondaryVertex.hh \
 	classes/DelphesClasses.h \
 	external/ExRootAnalysis/ExRootConfReader.h
 tmp/modules/SimpleCalorimeter.$(ObjSuf): \
@@ -2052,6 +2054,7 @@ external/fastjet/config.h: \
 classes/DelphesClasses.h: \
 	external/flavortag/hl_vars.hh \
 	external/flavortag/flavor_tag_truth.hh \
+	external/flavortag/SecondaryVertex.hh \
 	classes/SortableObject.h
 	@touch $@
 

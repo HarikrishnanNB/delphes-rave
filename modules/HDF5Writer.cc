@@ -390,7 +390,7 @@ namespace out {
 
   std::ostream& operator<<(std::ostream& out, const SuperJet& pars) {
     out << pars.jet_parameters;
-    out << ", " << pars.tracking << ", " << pars.vertex;
+    out << ", {" << pars.tracking << "}, {" << pars.vertex << "}";
     out << ", [" << pars.primary_vertex_tracks << "]";
     out << ", [" << pars.secondary_vertices << "]";
     return out;

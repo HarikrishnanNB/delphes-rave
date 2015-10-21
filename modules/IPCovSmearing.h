@@ -72,7 +72,6 @@ private:
   std::unordered_map<
     int, std::unordered_map<int, CovMatrix> > fCovarianceMatrices;
 #endif
-  double fSmearingMultiple;
 
   TIterator *fItInputArray; //!
 

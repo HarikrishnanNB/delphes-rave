@@ -3,6 +3,7 @@
 // #include "classes/DelphesClasses.h"
 #include "constants_jetprob.hh"
 #include "enums_track.hh"
+#include "math.hh"
 
 #include <vector>
 #include <utility>
@@ -16,6 +17,8 @@
 struct TrackParameters;
 
 namespace {
+  typedef std::vector<TrackParameters> Tracks;
+
   const double pi = std::atan2(0, -1);
   static_assert(std::numeric_limits<double>::has_infinity, "need inf");
   const double inf = std::numeric_limits<double>::infinity();
@@ -29,31 +32,19 @@ namespace {
 
   // see hardcoded parameters in constants_jetprob.hh
   double get_track_prob(double d0sig);
+
+  typedef std::pair<double, double> JetWidth;
+  JetWidth jet_width2_eta_phi(const TVector3& jet, const Tracks& tracks);
+
 }
 
 // __________________________________________________________________________
 // SVX
 
-SecondaryVertex::SecondaryVertex()
-{
-  clear();
-}
-SecondaryVertex::SecondaryVertex(double x, double y, double z):
-  TVector3(x, y, z)
-{
-  clear();
-}
-void SecondaryVertex::clear() {
-  Lxy = -1;
-  Lsig = -1;
-  nTracks = -1;
-  eFrac = -1;
-  mass = -1;
-  config = "null";
-}
 
 HighLevelSvx::HighLevelSvx():
-  Lsig(NaN), NVertex(-1), NTracks(-1), DrJet(NaN), Mass(NaN)
+  Lsig(NaN), NVertex(-1), NTracks(-1), DrJet(NaN), Mass(NaN),
+  EnergyFraction(NaN)
 {
 }
 
@@ -64,6 +55,7 @@ void HighLevelSvx::fill(const TVector3& jvec,
   int sum_tracks = 0;
   int sum_vertices = 0;
   double sum_mass = 0;
+  double sum_efrac = 0;
 
   // copied these variables from jetfitter
   double sum_sig = 0;
@@ -78,6 +70,7 @@ void HighLevelSvx::fill(const TVector3& jvec,
     sum_tracks += vx.nTracks;
 
     sum_mass += vx.mass;
+    sum_efrac += vx.eFrac;
 
     sum_sig += vx.Mag() / vx.decayLengthVariance;
     sum_inverr += 1/vx.decayLengthVariance;
@@ -90,6 +83,7 @@ void HighLevelSvx::fill(const TVector3& jvec,
   NTracks = has_vx ? sum_tracks                 : -1;
   DrJet = has_vx ? sum_dr_tracks / sum_tracks : inf;
   Mass = has_vx ? sum_mass                   : -1;
+  EnergyFraction = has_vx ? sum_efrac : -inf;
 }
 
 std::ostream& operator<<(std::ostream& os, const HighLevelSvx& hl) {
@@ -99,6 +93,7 @@ std::ostream& operator<<(std::ostream& os, const HighLevelSvx& hl) {
   DUMP(NTracks);
   DUMP(DrJet);
   DUMP(Mass);
+  DUMP(EnergyFraction);
 #undef DUMP
   return os;
 }
@@ -111,6 +106,8 @@ TrackParameters::TrackParameters(const float trkPar[5],
   d0(trkPar[trk::D0]),
   z0(trkPar[trk::Z0]),
   phi(trkPar[trk::PHI]),
+  theta(trkPar[trk::THETA]),
+  qoverp(trkPar[trk::QOVERP]),
   d0err(std::sqrt(trkCov[trk::D0D0])),
   z0err(std::sqrt(trkCov[trk::Z0Z0]))
 {
@@ -121,6 +118,7 @@ std::ostream& operator<<(std::ostream& os, const TrackParameters& hl) {
   DUMP(d0);
   DUMP(z0);
   DUMP(phi);
+  DUMP(theta);
   DUMP(d0err);
   DUMP(z0err);
 #undef DUMP
@@ -130,7 +128,8 @@ std::ostream& operator<<(std::ostream& os, const TrackParameters& hl) {
 HighLevelTracking::HighLevelTracking():
   track2d0sig(NaN), track3d0sig(NaN),
   track2z0sig(NaN), track3z0sig(NaN),
-  tracksOverIpThreshold(-1), jetProb(NaN)
+  tracksOverIpThreshold(-1), jetProb(NaN),
+  jetWidthEta(NaN), jetWidthPhi(NaN)
 {
 }
 
@@ -149,11 +148,19 @@ void HighLevelTracking::fill(const TVector3& jet,
   track3z0sig = -inf;
   tracksOverIpThreshold = 0;
   jetProb = -1;
+  jetWidthEta = -inf;
+  jetWidthPhi = -inf;
+
+  auto eta_phi = jet_width2_eta_phi(jet, pars);
+  if (eta_phi.first > 0) {
+    jetWidthEta = std::sqrt(eta_phi.first);
+    jetWidthPhi = std::sqrt(eta_phi.second);
+  }
 
   if (pars.size() == 0) return;
   jetProb = get_jet_prob(pars);
 
-  // what follows uses numbered tracks
+  // what follows uses numbered tracks (track counting)
   if (pars.size() < 2) return;
 
   for (const auto& par: pars) {
@@ -189,6 +196,8 @@ std::ostream& operator<<(std::ostream& os, const HighLevelTracking& hl) {
   DUMP(track3z0sig);
   DUMP(tracksOverIpThreshold);
   DUMP(jetProb);
+  DUMP(jetWidthEta);
+  DUMP(jetWidthPhi);
 #undef DUMP
   return os;
 }
@@ -206,8 +215,6 @@ namespace {
     using namespace jetprob;
     double prob = gauss_prob(sig, P0, P1) + gauss_prob(sig, P2, P3) +
       exp_prob(sig, P4, P5) + exp_prob(sig, P6, P7);
-    // std::cout << "prob for track with sig: "
-    // 	      << sig << ": " << prob << std::endl;
     return prob;
   }
   double get_jet_prob(const std::vector<TrackParameters>& pars) {
@@ -215,7 +222,6 @@ namespace {
     for (const auto& par: pars) {
       double sig = par.d0 / par.d0err;
       double prob = get_track_prob(std::abs(sig));
-      // std::cout << "sig: " << sig << ", prob: " << prob << std::endl;
       p0 *= prob;
     }
     int n_trk = pars.size();
@@ -224,5 +230,25 @@ namespace {
       corrections += std::pow( -std::log(p0), k) / std::tgamma(k + 1);
     }
     return p0 * corrections;
+  }
+  JetWidth jet_width2_eta_phi(const TVector3& jet, const Tracks& tracks) {
+    if (tracks.size() < 1) return {-1, -1};
+
+    const double jet_eta = jet.Eta();
+    const double jet_phi = jet.Phi();
+    double sum_pt_times_eta2 = 0;
+    double sum_pt_times_phi2 = 0;
+    double sum_pt = 0;
+    for (const auto& trk: tracks) {
+      double eta = -std::log(std::tan(trk.theta/2));
+      double deta = eta - jet_eta;
+      double dphi = phi_mpi_pi(trk.phi, jet_phi);
+      double track_pt = std::abs(1 / (trk.qoverp * std::cosh(eta)));
+      sum_pt += track_pt;
+      sum_pt_times_eta2 += track_pt * deta*deta;
+      sum_pt_times_phi2 += track_pt * dphi*dphi;
+    }
+    assert(sum_pt > 0);
+    return {sum_pt_times_eta2 / sum_pt, sum_pt_times_phi2 / sum_pt};
   }
 }

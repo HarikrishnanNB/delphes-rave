@@ -33,6 +33,7 @@
 
 #include "external/flavortag/hl_vars.hh"
 #include "external/flavortag/flavor_tag_truth.hh"
+#include "external/flavortag/SecondaryVertex.hh"
 
 #include "TRef.h"
 #include "TObject.h"
@@ -187,6 +188,38 @@ public:
   ClassDef(Vertex, 1)
 };
 
+class TSecondaryVertexTrack: public TObject
+{
+public:
+  double weight;
+  double d0;
+  double z0;
+  double d0err;
+  double z0err;
+  double pt;
+  // these are relative to jet axis
+  double dphi;
+  double deta;
+  ClassDef(TSecondaryVertexTrack, 1)
+};
+
+class TSecondaryVertex: public TObject
+{
+public:
+  float x;
+  float y;
+  float z;
+  float Lxy;
+  float Lsig;
+  float decayLengthVariance;
+  int nTracks;
+  float eFrac;
+  float mass;
+  std::string config;
+  std::vector<TSecondaryVertexTrack> tracks;
+  ClassDef(TSecondaryVertex, 1)
+};
+
 class TTruthVertex: public TObject
 {
 public:
@@ -199,6 +232,18 @@ public:
   int idx;
   int n_charged_tracks;
   ClassDef(TTruthVertex, 1)
+};
+
+class THighLevelSecondaryVertex: public TObject
+{
+public:
+  float svLsig;
+  int svNVertex;
+  int svNTracks;
+  float svDrJet;
+  float svMass;
+  float svEnergyFraction;
+  ClassDef(THighLevelSecondaryVertex, 1)
 };
 
 //---------------------------------------------------------------------------
@@ -376,13 +421,12 @@ public:
   UInt_t BTagPhys;
 
   // tagging stuff
-  std::vector<SecondaryVertex> SecondaryVertices;
+  std::vector<TSecondaryVertexTrack> PrimaryVertexTracks;
+  std::vector<TSecondaryVertex> SecondaryVertices;
   // high level vertex
-  float svLsig;
-  int svNVertex;
-  int svNTracks;
-  float svDrJet;
-  float svMass;
+  std::vector<TSecondaryVertexTrack> HLSecondaryVertexTracks;
+  THighLevelSecondaryVertex HLSecondaryVertex;
+  THighLevelSecondaryVertex MLSecondaryVertex;
   // high level track
   float track2d0sig;
   float track2z0sig;
@@ -390,6 +434,8 @@ public:
   float track3z0sig;
   int tracksOverIpThreshold;
   float jetProb;
+  float jetWidthEta;
+  float jetWidthPhi;
   std::vector<TTruthVertex> TruthVertices;
 
   UInt_t TauTag; // 0 or 1 for a jet that has been tagged as a tau
@@ -594,8 +640,11 @@ public:
   float trkCov[15];
 
   // secondary vertex parameters
+  std::vector<SecondaryVertexTrack> primaryVertexTracks;
   std::vector<SecondaryVertex> secondaryVertices;
+  std::vector<SecondaryVertexTrack> hlSecVxTracks;
   HighLevelSvx hlSvx;
+  HighLevelSvx mlSvx;
   // track-based b-tagging
   HighLevelTracking hlTrk;
   // truth vertices

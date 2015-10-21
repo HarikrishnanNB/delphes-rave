@@ -9,6 +9,8 @@
 // tagger doesn't apply. In other words, NaN signals that something
 // went wrong.
 
+#include "SecondaryVertex.hh"
+
 #include <vector>
 #include <ostream>
 
@@ -20,24 +22,6 @@ class SecondaryVertex;
 // __________________________________________________________________________
 // SVX
 
-class SecondaryVertex: public TVector3
-{
-public:
-  SecondaryVertex();
-  SecondaryVertex(double, double, double);
-  float Lxy;
-  float Lsig;
-  float decayLengthVariance;
-  int nTracks;
-  float eFrac;
-  float mass;
-  std::string config;
-  // void Copy(SecondaryVertex& object) const;
-  void clear();
-  // TODO: get rid of ClassDef here, store as a flat vertex object in output
-  ClassDef(SecondaryVertex, 1)
-};
-
 struct HighLevelSvx
 {
   HighLevelSvx();
@@ -48,6 +32,7 @@ struct HighLevelSvx
   int NTracks;
   double DrJet;
   double Mass;
+  double EnergyFraction;
 };
 
 std::ostream& operator<<(std::ostream& os, const HighLevelSvx&);
@@ -61,6 +46,7 @@ void copy(const HighLevelSvx& from, T& to) {
   CP(NTracks);
   CP(DrJet);
   CP(Mass);
+  CP(EnergyFraction);
 #undef CP
 }
 
@@ -73,6 +59,8 @@ struct TrackParameters
   double d0;
   double z0;
   double phi;
+  double theta;
+  double qoverp;
   double d0err;
   double z0err;
 };
@@ -89,6 +77,8 @@ struct HighLevelTracking
   double track3z0sig;
   int tracksOverIpThreshold;
   double jetProb;
+  double jetWidthEta;
+  double jetWidthPhi;
 };
 
 std::ostream& operator<<(std::ostream& os, const HighLevelTracking&);
@@ -103,6 +93,8 @@ void copy(const HighLevelTracking& from, T& to) {
   CP(track3z0sig);
   CP(tracksOverIpThreshold);
   CP(jetProb);
+  CP(jetWidthEta);
+  CP(jetWidthPhi);
 #undef CP
 }
 

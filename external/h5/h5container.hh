@@ -27,6 +27,10 @@ namespace h5 {
     vector& operator=(vector);
     void push_back(T value);
     size_t size() const;
+    typename std::vector<T>::iterator begin() const;
+    typename std::vector<T>::iterator end() const;
+    T& back() const;
+    const T& at(size_t) const;
     T* data();
     hvl_t h5;
 
@@ -115,6 +119,18 @@ namespace h5 {
   }
   template<typename T>
   size_t vector<T>::size() const { return _vector.size(); }
+  template<typename T>
+  typename std::vector<T>::iterator vector<T>::begin() const {
+    return _vector.begin();
+  }
+  template<typename T>
+  typename std::vector<T>::iterator vector<T>::end() const {
+    return _vector.end();
+  }
+  template<typename T>
+  T& vector<T>::back() const {return _vector.back(); }
+  template<typename T>
+  const T& vector<T>::at(size_t iii) const { return _vector.at(iii); }
   template<typename T>
   T* vector<T>::data() { return _vector.data(); }
 

@@ -51,6 +51,8 @@ public:
   void flush();
   // get the _total_ size (buffered and written)
   hsize_t size() const;
+  // close the dataset
+  void close();
 
 // ____________________________________________________________________
 // implementation level stuff
@@ -167,5 +169,9 @@ hsize_t OneDimBuffer<T>::size() const
   return _offset + _buffer.size();
 }
 
+template<typename T>
+void OneDimBuffer<T>::close() {
+  _ds.close();
+}
 
 #endif

@@ -549,6 +549,18 @@ void TreeWriter::ProcessMuons(ExRootTreeBranch *branch, TObjArray *array)
 }
 
 //------------------------------------------------------------------------------
+void copy(const SecondaryVertexTrack& vxtrk, TSecondaryVertexTrack& track) {
+#define CP(VAR) track.VAR = vxtrk.VAR
+  CP(weight);
+  CP(d0);
+  CP(z0);
+  CP(d0err);
+  CP(z0err);
+  CP(pt);
+  CP(dphi);
+  CP(deta);
+#undef CP
+}
 
 void TreeWriter::ProcessJets(ExRootTreeBranch *branch, TObjArray *array)
 {
@@ -601,8 +613,44 @@ void TreeWriter::ProcessJets(ExRootTreeBranch *branch, TObjArray *array)
     entry->BTagAlgo = candidate->BTagAlgo;
     entry->BTagPhys = candidate->BTagPhys;
 
-    entry->SecondaryVertices = candidate->secondaryVertices;
-    copy(candidate->hlSvx, *entry);
+    entry->PrimaryVertexTracks.clear();
+    for (const auto& vxtrk: candidate->primaryVertexTracks) {
+      TSecondaryVertexTrack track;
+      copy(vxtrk, track);
+      entry->PrimaryVertexTracks.push_back(track);
+    }
+
+    entry->SecondaryVertices.clear();
+    for (const auto& vx: candidate->secondaryVertices) {
+      TSecondaryVertex tvx;
+      tvx.x = vx.X();
+      tvx.y = vx.Y();
+      tvx.z = vx.Z();
+#define CP(VAR) tvx.VAR = vx.VAR
+      CP(Lxy);
+      CP(Lsig);
+      CP(decayLengthVariance);
+      CP(nTracks);
+      CP(eFrac);
+      CP(mass);
+      CP(config);
+#undef CP
+      for (const auto& vxtrk: vx.tracks_along_jet) {
+	TSecondaryVertexTrack track;
+	copy(vxtrk, track);
+	tvx.tracks.push_back(track);
+      }
+
+      entry->SecondaryVertices.push_back(tvx);
+    }
+    entry->HLSecondaryVertexTracks.clear();
+    for (const auto& vxtrk: candidate->hlSecVxTracks) {
+      TSecondaryVertexTrack track;
+      copy(vxtrk, track);
+      entry->HLSecondaryVertexTracks.push_back(track);
+    }
+    copy(candidate->hlSvx, entry->HLSecondaryVertex);
+    copy(candidate->mlSvx, entry->MLSecondaryVertex);
     copy(candidate->hlTrk, *entry);
     entry->TruthVertices.clear();
     for (const auto& vx: candidate->truthVertices) {

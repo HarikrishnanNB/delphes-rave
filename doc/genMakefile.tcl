@@ -227,12 +227,16 @@ endif
 # HDF writer
 DELPHES_OBJ += tmp/external/h5/bork.$(ObjSuf)
 DELPHES_OBJ += tmp/external/h5/h5container.$(ObjSuf)
+DELPHES_OBJ += tmp/external/h5/h5types.$(ObjSuf)
 DELPHES_OBJ += tmp/external/h5/OneDimBuffer.$(ObjSuf)
-DELPHES_LIBS += -lhdf5_cpp -lhdf5
+CXXFLAGS    += $(shell pkg-config hdf5 --cflags)
+DELPHES_LIBS += $(shell pkg-config hdf5 --libs) -lhdf5_cpp
 
 # compile some tagging stuff that's not technically a module
+DELPHES_OBJ += tmp/external/flavortag/SecondaryVertex.$(ObjSuf)
 DELPHES_OBJ += tmp/external/flavortag/hl_vars.$(ObjSuf)
 DELPHES_OBJ += tmp/external/flavortag/flavor_tag_truth.$(ObjSuf)
+DELPHES_OBJ += tmp/external/flavortag/math.$(ObjSuf)
 
 ifneq ($(CMSSW_FWLITE_INCLUDE_PATH),)
 HAS_CMSSW = true

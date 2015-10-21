@@ -64,8 +64,11 @@
 #pragma link C++ class Tower+;
 #pragma link C++ class HectorHit+;
 
-#pragma link C++ class SecondaryVertex+;
-#pragma link C++ class std::vector<SecondaryVertex>;
+#pragma link C++ class TSecondaryVertexTrack+;
+#pragma link C++ class std::vector<TSecondaryVertexTrack>;
+#pragma link C++ class TSecondaryVertex+;
+#pragma link C++ class THighLevelSecondaryVertex+;
+#pragma link C++ class std::vector<TSecondaryVertex>;
 #pragma link C++ class TTruthVertex+;
 #pragma link C++ class std::vector<TTruthVertex>;
 

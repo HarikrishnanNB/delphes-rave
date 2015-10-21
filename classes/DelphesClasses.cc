@@ -485,3 +485,4 @@ TTruthVertex::TTruthVertex(const TruthVertex& vx):
   n_charged_tracks(vx.n_charged_tracks)
 {
 }
+

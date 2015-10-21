@@ -32,7 +32,7 @@
 #include <vector>
 #include <utility>
 #ifndef __CINT__
-#include <unordered_set>
+#include <unordered_map>
 #endif
 
 class TObjArray;
@@ -47,6 +47,12 @@ namespace rave {
 }
 class RaveConverter;
 
+struct SortedTracks {
+  std::vector<std::pair<double, Candidate*> > first;
+  std::vector<Candidate*> second;
+  std::vector<Candidate*> all; // both vertices, include low pt
+};
+
 class SecondaryVertexTagging: public DelphesModule
 {
 public:
@@ -59,8 +65,6 @@ public:
   void Finish();
 
 private:
-  typedef std::pair<std::vector<Candidate*>,
-		    std::vector<Candidate*> > SortedTracks;
   Double_t fPtMin;
   Double_t fDeltaR;
   Double_t fIPmax;
@@ -68,7 +72,8 @@ private:
   double fPrimaryVertexPtMin;
   double fPrimaryVertexD0Max;
   double fPrimaryVertexCompatibility;
-  std::vector<std::string> fVertexFindingMethods;
+  double fHLSecVxCompatibility;
+  double fMidLevelSecVxCompatibility;
 
   TIterator *fItTrackInputArray; //!
   TIterator *fItJetInputArray; //!
@@ -82,7 +87,7 @@ private:
   // return a pair: first is selected tracks in the jet, second is selected
   // tracks not in the jet
   SortedTracks SelectTracksInJet(
-    Candidate*, const std::unordered_set<unsigned>& primary_ids);
+    Candidate*, const std::unordered_map<unsigned, double>& primary_weight);
   rave::Vertex GetPrimaryVertex();
   rave::Vertex getPrimaryVertex(const std::vector<rave::Track>& tracks);
 

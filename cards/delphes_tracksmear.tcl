@@ -5,10 +5,8 @@
 set MaxEvents 5
 
 # scaling for vertexing and tracking smearing / covariance
-set TrackSmear 1
-set CovScale 1
-
-# set SkipEvents
+set TrackSmear 1.0
+set CovScale 1.0
 
 set ExecutionPath {
   ParticlePropagator
@@ -49,8 +47,8 @@ set ExecutionPath {
 
   ScalarHT
 
-  TreeWriter
   HDF5Writer
+  TreeWriter
 }
 
 #################################
@@ -545,7 +543,7 @@ module TrackBasedBTagging TrackBasedBTagging {
   set TrackInputArray $TaggingTracks
   set JetInputArray JetEnergyScale/jets
 
-  set TrackMinPt 0.0
+  set TrackMinPt 0.5
   set DeltaR 0.4;		# was 0.4
   set TrackIPMax 2;		# was 2.0
 
@@ -560,16 +558,17 @@ module SecondaryVertexTagging SecondaryVertexTagging {
   set JetInputArray JetEnergyScale/jets
   set OutputArray secondaryVertices
 
-  set TrackMinPt 1.0
-  set PrimaryVertexPtMin 1
-  set PrimaryVertexD0Max 0.1
+  set PrimaryVertexPtMin 0.5
+  set PrimaryVertexD0Max 1
   set PrimaryVertexCompatibility 0.9
 
+  set TrackPtMin 0.5
   set DeltaR 0.4;
   set TrackIPMax 8;
   set Bz 2.0
   set Beamspot {0.015 0.015 46.0}
-  set VertexFindingMethods {avr}
+  set HLSecVxCompatibility 3.0
+  set MidLevelSecVxCompatibility 1.0
 
   set CovarianceScaling $CovScale
 }
@@ -629,4 +628,7 @@ module TreeWriter TreeWriter {
 module HDF5Writer HDF5Writer {
   set JetInputArray UniqueObjectFinder/jets
   set OutputExtension .ntuple.h5
+  set TextFileExtension .ntuple.txt
+  set PTMin 20
+  set AbsEtaMax 2.5
 }

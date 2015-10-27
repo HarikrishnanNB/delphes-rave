@@ -225,18 +225,8 @@ else
 endif
 
 # HDF writer
-DELPHES_OBJ += tmp/external/h5/bork.$(ObjSuf)
-DELPHES_OBJ += tmp/external/h5/h5container.$(ObjSuf)
-DELPHES_OBJ += tmp/external/h5/h5types.$(ObjSuf)
-DELPHES_OBJ += tmp/external/h5/OneDimBuffer.$(ObjSuf)
 CXXFLAGS    += $(shell pkg-config hdf5 --cflags)
 DELPHES_LIBS += $(shell pkg-config hdf5 --libs) -lhdf5_cpp
-
-# compile some tagging stuff that's not technically a module
-DELPHES_OBJ += tmp/external/flavortag/SecondaryVertex.$(ObjSuf)
-DELPHES_OBJ += tmp/external/flavortag/hl_vars.$(ObjSuf)
-DELPHES_OBJ += tmp/external/flavortag/flavor_tag_truth.$(ObjSuf)
-DELPHES_OBJ += tmp/external/flavortag/math.$(ObjSuf)
 
 ifneq ($(CMSSW_FWLITE_INCLUDE_PATH),)
 HAS_CMSSW = true
@@ -312,7 +302,7 @@ dictDeps {FASTJET_DICT} {modules/FastJetLinkDef.h}
 
 dictDeps {DISPLAY_DICT} {display/DisplayLinkDef.h}
 
-sourceDeps {DELPHES} {classes/*.cc} {modules/*.cc} {external/ExRootAnalysis/*.cc} {external/Hector/*.cc}
+sourceDeps {DELPHES} {classes/*.cc} {classes/flavortag/*.cc} {modules/*.cc} {external/ExRootAnalysis/*.cc} {external/Hector/*.cc} {external/h5/*.cc}
 
 sourceDeps {FASTJET} {modules/FastJet*.cc} {modules/RunPUPPI.cc} {external/PUPPI/*.cc} {external/fastjet/*.cc} {external/fastjet/tools/*.cc} {external/fastjet/plugins/*/*.cc} {external/fastjet/contribs/*/*.cc} 
 

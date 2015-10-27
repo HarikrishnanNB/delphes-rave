@@ -29,7 +29,7 @@
 #include "modules/IPCovSmearing.h"
 
 // for TRKCOV_TOARRAY macros
-#include "external/flavortag/track_set_macros.hh"
+#include "classes/flavortag/track_set_macros.hh"
 
 #include "classes/DelphesClasses.h"
 #include "classes/DelphesFactory.h"

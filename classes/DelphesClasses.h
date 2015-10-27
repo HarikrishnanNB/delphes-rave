@@ -31,9 +31,9 @@
 
 // Dependencies (#includes)
 
-#include "external/flavortag/hl_vars.hh"
-#include "external/flavortag/flavor_tag_truth.hh"
-#include "external/flavortag/SecondaryVertex.hh"
+#include "classes/flavortag/hl_vars.hh"
+#include "classes/flavortag/flavor_tag_truth.hh"
+#include "classes/flavortag/SecondaryVertex.hh"
 
 #include "TRef.h"
 #include "TObject.h"

@@ -35,18 +35,8 @@ else
 endif
 
 # HDF writer
-DELPHES_OBJ += tmp/external/h5/bork.$(ObjSuf)
-DELPHES_OBJ += tmp/external/h5/h5container.$(ObjSuf)
-DELPHES_OBJ += tmp/external/h5/h5types.$(ObjSuf)
-DELPHES_OBJ += tmp/external/h5/OneDimBuffer.$(ObjSuf)
 CXXFLAGS    += $(shell pkg-config hdf5 --cflags)
 DELPHES_LIBS += $(shell pkg-config hdf5 --libs) -lhdf5_cpp
-
-# compile some tagging stuff that's not technically a module
-DELPHES_OBJ += tmp/external/flavortag/SecondaryVertex.$(ObjSuf)
-DELPHES_OBJ += tmp/external/flavortag/hl_vars.$(ObjSuf)
-DELPHES_OBJ += tmp/external/flavortag/flavor_tag_truth.$(ObjSuf)
-DELPHES_OBJ += tmp/external/flavortag/math.$(ObjSuf)
 
 ifneq ($(CMSSW_FWLITE_INCLUDE_PATH),)
 HAS_CMSSW = true
@@ -316,8 +306,8 @@ tmp/classes/ClassesDict.$(SrcSuf): \
 	classes/DelphesFactory.h \
 	classes/SortableObject.h \
 	classes/DelphesClasses.h \
-	external/flavortag/hl_vars.hh \
-	external/flavortag/flavor_tag_truth.hh
+	classes/flavortag/hl_vars.hh \
+	classes/flavortag/flavor_tag_truth.hh
 ClassesDict$(PcmSuf): \
 	tmp/classes/ClassesDict$(PcmSuf) \
 	tmp/classes/ClassesDict.$(SrcSuf)
@@ -479,6 +469,18 @@ tmp/classes/DelphesStream.$(ObjSuf): \
 tmp/classes/DelphesTF2.$(ObjSuf): \
 	classes/DelphesTF2.$(SrcSuf) \
 	classes/DelphesTF2.h
+tmp/classes/flavortag/RaveConverter.$(ObjSuf): \
+	classes/flavortag/RaveConverter.$(SrcSuf) \
+	classes/DelphesClasses.h
+tmp/classes/flavortag/SecondaryVertex.$(ObjSuf): \
+	classes/flavortag/SecondaryVertex.$(SrcSuf) \
+	classes/DelphesClasses.h
+tmp/classes/flavortag/flavor_tag_truth.$(ObjSuf): \
+	classes/flavortag/flavor_tag_truth.$(SrcSuf)
+tmp/classes/flavortag/hl_vars.$(ObjSuf): \
+	classes/flavortag/hl_vars.$(SrcSuf)
+tmp/classes/flavortag/math.$(ObjSuf): \
+	classes/flavortag/math.$(SrcSuf)
 tmp/external/ExRootAnalysis/ExRootConfReader.$(ObjSuf): \
 	external/ExRootAnalysis/ExRootConfReader.$(SrcSuf) \
 	external/ExRootAnalysis/ExRootConfReader.h \
@@ -565,6 +567,14 @@ tmp/external/Hector/H_VerticalKicker.$(ObjSuf): \
 	external/Hector/H_VerticalKicker.$(SrcSuf)
 tmp/external/Hector/H_VerticalQuadrupole.$(ObjSuf): \
 	external/Hector/H_VerticalQuadrupole.$(SrcSuf)
+tmp/external/h5/OneDimBuffer.$(ObjSuf): \
+	external/h5/OneDimBuffer.$(SrcSuf)
+tmp/external/h5/bork.$(ObjSuf): \
+	external/h5/bork.$(SrcSuf)
+tmp/external/h5/h5container.$(ObjSuf): \
+	external/h5/h5container.$(SrcSuf)
+tmp/external/h5/h5types.$(ObjSuf): \
+	external/h5/h5types.$(SrcSuf)
 tmp/modules/AngularSmearing.$(ObjSuf): \
 	modules/AngularSmearing.$(SrcSuf) \
 	modules/AngularSmearing.h \
@@ -658,7 +668,7 @@ tmp/modules/HDF5Writer.$(ObjSuf): \
 	modules/HDF5Writer.$(SrcSuf) \
 	modules/HDF5Writer.h \
 	external/h5/h5types.hh \
-	external/flavortag/SecondaryVertex.hh \
+	classes/flavortag/SecondaryVertex.hh \
 	classes/DelphesClasses.h \
 	external/ExRootAnalysis/ExRootConfReader.h \
 	external/ExRootAnalysis/ExRootTreeWriter.h
@@ -677,7 +687,7 @@ tmp/modules/Hector.$(ObjSuf): \
 tmp/modules/IPCovSmearing.$(ObjSuf): \
 	modules/IPCovSmearing.$(SrcSuf) \
 	modules/IPCovSmearing.h \
-	external/flavortag/track_set_macros.hh \
+	classes/flavortag/track_set_macros.hh \
 	classes/DelphesClasses.h \
 	classes/DelphesFactory.h \
 	external/ExRootAnalysis/ExRootResult.h \
@@ -824,10 +834,11 @@ tmp/modules/SecondaryVertexAssociator.$(ObjSuf): \
 tmp/modules/SecondaryVertexTagging.$(ObjSuf): \
 	modules/SecondaryVertexTagging.$(SrcSuf) \
 	modules/SecondaryVertexTagging.h \
-	external/flavortag/math.hh \
-	external/flavortag/SecondaryVertex.hh \
+	classes/flavortag/math.hh \
+	classes/flavortag/SecondaryVertex.hh \
 	classes/DelphesClasses.h \
-	external/ExRootAnalysis/ExRootConfReader.h
+	external/ExRootAnalysis/ExRootConfReader.h \
+	classes/flavortag/RaveConverter.hh
 tmp/modules/SimpleCalorimeter.$(ObjSuf): \
 	modules/SimpleCalorimeter.$(SrcSuf) \
 	modules/SimpleCalorimeter.h \
@@ -874,7 +885,7 @@ tmp/modules/TimeSmearing.$(ObjSuf): \
 tmp/modules/TrackBasedBTagging.$(ObjSuf): \
 	modules/TrackBasedBTagging.$(SrcSuf) \
 	modules/TrackBasedBTagging.h \
-	external/flavortag/hl_vars.hh \
+	classes/flavortag/hl_vars.hh \
 	classes/DelphesClasses.h \
 	classes/DelphesFactory.h \
 	classes/DelphesFormula.h
@@ -934,6 +945,11 @@ DELPHES_OBJ +=  \
 	tmp/classes/DelphesSTDHEPReader.$(ObjSuf) \
 	tmp/classes/DelphesStream.$(ObjSuf) \
 	tmp/classes/DelphesTF2.$(ObjSuf) \
+	tmp/classes/flavortag/RaveConverter.$(ObjSuf) \
+	tmp/classes/flavortag/SecondaryVertex.$(ObjSuf) \
+	tmp/classes/flavortag/flavor_tag_truth.$(ObjSuf) \
+	tmp/classes/flavortag/hl_vars.$(ObjSuf) \
+	tmp/classes/flavortag/math.$(ObjSuf) \
 	tmp/external/ExRootAnalysis/ExRootConfReader.$(ObjSuf) \
 	tmp/external/ExRootAnalysis/ExRootFilter.$(ObjSuf) \
 	tmp/external/ExRootAnalysis/ExRootProgressBar.$(ObjSuf) \
@@ -970,6 +986,10 @@ DELPHES_OBJ +=  \
 	tmp/external/Hector/H_TransportMatrices.$(ObjSuf) \
 	tmp/external/Hector/H_VerticalKicker.$(ObjSuf) \
 	tmp/external/Hector/H_VerticalQuadrupole.$(ObjSuf) \
+	tmp/external/h5/OneDimBuffer.$(ObjSuf) \
+	tmp/external/h5/bork.$(ObjSuf) \
+	tmp/external/h5/h5container.$(ObjSuf) \
+	tmp/external/h5/h5types.$(ObjSuf) \
 	tmp/modules/AngularSmearing.$(ObjSuf) \
 	tmp/modules/BTagging.$(ObjSuf) \
 	tmp/modules/Calorimeter.$(ObjSuf) \
@@ -1901,7 +1921,7 @@ modules/JetTrackDumper.h: \
 modules/SecondaryVertexAssociator.h: \
 	classes/DelphesModule.h \
 	classes/DelphesClasses.h \
-	external/flavortag/flavor_tag_truth.hh
+	classes/flavortag/flavor_tag_truth.hh
 	@touch $@
 
 external/fastjet/plugins/CDFCones/fastjet/CDFMidPointPlugin.hh: \
@@ -2052,9 +2072,9 @@ external/fastjet/config.h: \
 	@touch $@
 
 classes/DelphesClasses.h: \
-	external/flavortag/hl_vars.hh \
-	external/flavortag/flavor_tag_truth.hh \
-	external/flavortag/SecondaryVertex.hh \
+	classes/flavortag/hl_vars.hh \
+	classes/flavortag/flavor_tag_truth.hh \
+	classes/flavortag/SecondaryVertex.hh \
 	classes/SortableObject.h
 	@touch $@
 

@@ -26,7 +26,7 @@
  */
 
 #include "modules/TrackBasedBTagging.h"
-#include "external/flavortag/hl_vars.hh"
+#include "classes/flavortag/hl_vars.hh"
 
 #include "classes/DelphesClasses.h"
 #include "classes/DelphesFactory.h"

@@ -29,7 +29,7 @@
 
 #include "classes/DelphesModule.h"
 #include "classes/DelphesClasses.h"
-#include "external/flavortag/flavor_tag_truth.hh"
+#include "classes/flavortag/flavor_tag_truth.hh"
 
 #include <map>
 #include <set>

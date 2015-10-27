@@ -31,8 +31,8 @@
 #include "classes/SortableObject.h"
 #include "classes/DelphesClasses.h"
 
-#include "external/flavortag/hl_vars.hh"
-#include "external/flavortag/flavor_tag_truth.hh"
+#include "classes/flavortag/hl_vars.hh"
+#include "classes/flavortag/flavor_tag_truth.hh"
 
 #ifdef __CINT__
 

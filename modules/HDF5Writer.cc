@@ -27,7 +27,7 @@
 
 #include "modules/HDF5Writer.h"
 #include "external/h5/h5types.hh"
-#include "external/flavortag/SecondaryVertex.hh"
+#include "classes/flavortag/SecondaryVertex.hh"
 
 #include "classes/DelphesClasses.h"
 #include "ExRootAnalysis/ExRootConfReader.h"

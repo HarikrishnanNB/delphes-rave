@@ -55,6 +55,7 @@
 #include <map>
 #include <set>
 #include <iomanip>
+#include <limits>
 
 // forward declare some utility functions that are used below
 namespace {
@@ -63,6 +64,9 @@ namespace {
   // some vertex properties require that we cut on a track association
   // probibility.
   const double VPROB_THRESHOLD = 0.5;
+
+  static_assert(std::numeric_limits<double>::has_infinity, "need inf");
+  const double inf = std::numeric_limits<double>::infinity();
 
   typedef std::vector<std::pair<double, Candidate*> > WeightedTracks;
 
@@ -521,6 +525,8 @@ namespace {
     if (decaylength == 0) return 0;
 
     double err = sqrt(decay_length_variance(vx));
+    // FIXME: figure out why this sometimes comes out as NaN
+    if (std::isnan(err)) return inf;
     return decaylength / err;
   }
   double decay_length_variance(const rave::Vertex& vx) {

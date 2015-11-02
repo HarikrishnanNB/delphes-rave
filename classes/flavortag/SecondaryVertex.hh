@@ -16,6 +16,7 @@ struct SecondaryVertexTrack
   // these are relative to jet axis
   double dphi;
   double deta;
+  Candidate* delphes_track;
 };
 
 class SecondaryVertex: public TVector3
@@ -32,7 +33,7 @@ public:
   std::string config;
   double deta;
   double dphi;
-  std::vector<std::pair<double, Candidate*> > tracks;
+  // std::vector<std::pair<double, Candidate*> > tracks;
   std::vector<SecondaryVertexTrack> tracks_along_jet;
   void clear();
 };

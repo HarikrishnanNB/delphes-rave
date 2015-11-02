@@ -54,7 +54,7 @@ namespace {
 
 HDF5Writer::HDF5Writer() :
   fItInputArray(0), m_out_file(0), m_hl_jet_buffer(0),
-  m_ml_jet_buffer(0)
+  m_ml_jet_buffer(0), m_superjet_buffer(0)
 {
 }
 
@@ -65,6 +65,7 @@ HDF5Writer::~HDF5Writer()
   delete m_out_file;
   delete m_hl_jet_buffer;
   delete m_ml_jet_buffer;
+  delete m_superjet_buffer;
   delete fItInputArray;
 }
 
@@ -97,11 +98,14 @@ void HDF5Writer::Init()
 
   auto hl_jtype = out::type(out::HighLevelJet());
   auto ml_jtype = out::type(out::MediumLevelJet());
+  auto superjet_type = out::type(out::VLSuperJet());
 
-  m_hl_jet_buffer = new OneDimBuffer<out::HighLevelJet>(
-    *m_out_file, "high_level_jets", hl_jtype, 1000);
-  m_ml_jet_buffer = new OneDimBuffer<out::MediumLevelJet>(
-    *m_out_file, "medium_level_jets", ml_jtype, 1000);
+  // m_hl_jet_buffer = new OneDimBuffer<out::HighLevelJet>(
+  //   *m_out_file, "high_level_jets", hl_jtype, 1000);
+  // m_ml_jet_buffer = new OneDimBuffer<out::MediumLevelJet>(
+  //   *m_out_file, "medium_level_jets", ml_jtype, 1000);
+  m_superjet_buffer = new OneDimBuffer<out::VLSuperJet>(
+    *m_out_file, "jets", superjet_type, 1000);
 
   // create the output text file
   std::string text_file_ext = GetString("TextFileExtension", "");
@@ -163,7 +167,20 @@ namespace out {
     weight(tk.weight)
   {
   }
+  bool operator<(const VertexTrack& v1, const VertexTrack& v2) {
+    return v1.d0 < v2.d0;
+  }
   SecondaryVertex::SecondaryVertex(const ::SecondaryVertex& vx):
+    mass(vx.mass),
+    displacement(vx.Mag()),
+    delta_eta_jet(vx.deta),
+    delta_phi_jet(vx.dphi),
+    displacement_significance(vx.Lsig)
+  {
+  }
+  // TODO: unify SecondaryVertexWithTracks with SecondaryVertex
+  SecondaryVertexWithTracks::SecondaryVertexWithTracks(
+    const ::SecondaryVertex& vx):
     mass(vx.mass),
     displacement(vx.Mag()),
     delta_eta_jet(vx.deta),
@@ -181,7 +198,7 @@ namespace out {
       primary_vertex_tracks.push_back(trk);
     }
     for (const auto& vx: jet.secondaryVertices) {
-      secondary_vertices.push_back(SecondaryVertex(vx));
+      secondary_vertices.push_back(SecondaryVertexWithTracks(vx));
     }
   }
   SuperJet::SuperJet(Candidate& jet):
@@ -191,8 +208,64 @@ namespace out {
       primary_vertex_tracks.push_back(trk);
     }
     for (const auto& vx: jet.secondaryVertices) {
-      secondary_vertices.push_back(SecondaryVertex(vx));
+      secondary_vertices.push_back(SecondaryVertexWithTracks(vx));
     }
+  }
+
+  // medium 2.0 objects
+  CombinedSecondaryTrack::CombinedSecondaryTrack(
+    const SecondaryVertexTrack& tk,
+    const ::SecondaryVertex& vx):
+    track(tk),
+    vertex(vx)
+  {
+  }
+  bool operator<(const CombinedSecondaryTrack& t1,
+		 const CombinedSecondaryTrack& t2) {
+    return t1.track < t2.track;
+  }
+
+  VLSuperJet::VLSuperJet(Candidate& jet):
+    jet_parameters(jet),
+    tracking(jet.hlTrk),
+    vertex(jet.hlSvx)
+  {
+    // sort primary tracks
+    std::vector<VertexTrack> sorted_tracks;
+    for (const auto& trk: jet.primaryVertexTracks) {
+      sorted_tracks.push_back(trk);
+    }
+    std::sort(sorted_tracks.begin(), sorted_tracks.end());
+    primary_vertex_tracks = sorted_tracks;
+
+    // Filter secondary tracks
+    //
+    // When vertices are formed with the AVR method, low weight tracks
+    // from the first vertex are reassigned to the following vertex,
+    // but not removed from the first vertex. We have to go through
+    // the vertices in reverse order and keep track of tracks which
+    // have already been used to avoid double counting.
+    std::map<Candidate*, double> used;
+    int n_overlap = 0;
+    std::vector<CombinedSecondaryTrack> sorted_secondary_tracks;
+    for (auto vx = jet.secondaryVertices.crbegin();
+    	 vx != jet.secondaryVertices.crend(); vx++) {
+      for (const auto& trk: vx->tracks_along_jet) {
+	if (!used.count(trk.delphes_track)) {
+	  sorted_secondary_tracks.emplace_back(trk, *vx);
+	  used.emplace(trk.delphes_track, trk.weight);
+	} else {
+	  // std::cout << "rejected " << trk.weight << " for "
+	  // 	    << used.at(trk.delphes_track) << std::endl;
+	  n_overlap++;
+	}
+      }
+    }
+    // std::cout << "used: " << used.size() << " removed: " << n_overlap
+    // 	      << std::endl;
+    std::sort(sorted_secondary_tracks.begin(),
+	      sorted_secondary_tracks.end());
+    secondary_vertex_tracks = sorted_secondary_tracks;
   }
 
   // ____________________________________________________________________
@@ -252,6 +325,12 @@ namespace out {
     H5_INSERT(out, VertexTrack, weight);
     return out;
   }
+  H5::CompType type(CombinedSecondaryTrack) {
+    H5::CompType out(sizeof(CombinedSecondaryTrack));
+    H5_INSERT(out, CombinedSecondaryTrack, track);
+    H5_INSERT(out, CombinedSecondaryTrack, vertex);
+    return out;
+  }
   H5::CompType type(SecondaryVertex) {
     H5::CompType out(sizeof(SecondaryVertex));
     H5_INSERT(out, SecondaryVertex, mass);
@@ -259,7 +338,16 @@ namespace out {
     H5_INSERT(out, SecondaryVertex, delta_eta_jet);
     H5_INSERT(out, SecondaryVertex, delta_phi_jet);
     H5_INSERT(out, SecondaryVertex, displacement_significance);
-    H5_INSERT(out, SecondaryVertex, associated_tracks);
+    return out;
+  }
+  H5::CompType type(SecondaryVertexWithTracks) {
+    H5::CompType out(sizeof(SecondaryVertexWithTracks));
+    H5_INSERT(out, SecondaryVertexWithTracks, mass);
+    H5_INSERT(out, SecondaryVertexWithTracks, displacement);
+    H5_INSERT(out, SecondaryVertexWithTracks, delta_eta_jet);
+    H5_INSERT(out, SecondaryVertexWithTracks, delta_phi_jet);
+    H5_INSERT(out, SecondaryVertexWithTracks, displacement_significance);
+    H5_INSERT(out, SecondaryVertexWithTracks, associated_tracks);
     return out;
   }
   H5::CompType type(MediumLevelJet) {
@@ -269,18 +357,33 @@ namespace out {
     H5_INSERT(out, MediumLevelJet, secondary_vertices);
     return out;
   }
+  H5::CompType type(VLSuperJet) {
+    H5::CompType out(sizeof(VLSuperJet));
+    H5_INSERT(out, VLSuperJet, jet_parameters);
+    H5_INSERT(out, VLSuperJet, tracking);
+    H5_INSERT(out, VLSuperJet, vertex);
+    H5_INSERT(out, VLSuperJet, primary_vertex_tracks);
+    H5_INSERT(out, VLSuperJet, secondary_vertex_tracks);
+    return out;
+  }
 }
 
 //------------------------------------------------------------------------------
 
 void HDF5Writer::Finish()
 {
-  m_hl_jet_buffer->flush();
-  m_hl_jet_buffer->close();
-
-  m_ml_jet_buffer->flush();
-  m_ml_jet_buffer->close();
-
+  if (m_hl_jet_buffer) {
+    m_hl_jet_buffer->flush();
+    m_hl_jet_buffer->close();
+  }
+  if (m_ml_jet_buffer) {
+    m_ml_jet_buffer->flush();
+    m_ml_jet_buffer->close();
+  }
+  if (m_superjet_buffer) {
+    m_superjet_buffer->flush();
+    m_superjet_buffer->close();
+  }
   if (m_output_stream.is_open()) {
     m_output_stream.close();
   }
@@ -296,10 +399,11 @@ void HDF5Writer::Process()
     const auto& mom = jet->Momentum;
     if (mom.Pt() < fPTMin || std::abs(mom.Eta()) > fAbsEtaMax) continue;
     if (m_output_stream.is_open()) {
-      m_output_stream << out::SuperJet(*jet) << "\n";
+      m_output_stream << out::VLSuperJet(*jet) << "\n";
     }
-    m_hl_jet_buffer->push_back(*jet);
-    m_ml_jet_buffer->push_back(*jet);
+    if (m_hl_jet_buffer) m_hl_jet_buffer->push_back(*jet);
+    if (m_ml_jet_buffer) m_ml_jet_buffer->push_back(*jet);
+    if (m_superjet_buffer) m_superjet_buffer->push_back(*jet);
   }
 }
 
@@ -366,13 +470,24 @@ namespace out {
     out << pars.displacement << ", ";
     out << pars.delta_eta_jet << ", ";
     out << pars.delta_phi_jet << ", ";
+    out << pars.displacement_significance;
+    return out;
+  }
+
+  std::ostream& operator<<(std::ostream& out,
+			   const SecondaryVertexWithTracks& pars) {
+    out << pars.mass << ", ";
+    out << pars.displacement << ", ";
+    out << pars.delta_eta_jet << ", ";
+    out << pars.delta_phi_jet << ", ";
     out << pars.displacement_significance << ", [";
     out << pars.associated_tracks;
     out << "]";
     return out;
   }
   std::ostream& operator<<(std::ostream& out,
-			   const h5::vector<SecondaryVertex>& vxs) {
+			   const h5::vector<SecondaryVertexWithTracks>& vxs)
+  {
     size_t n_svx = vxs.size();
     for (size_t iii = 0; iii < n_svx; iii++) {
       const auto& vx = vxs.at(iii);
@@ -393,6 +508,31 @@ namespace out {
     out << ", {" << pars.tracking << "}, {" << pars.vertex << "}";
     out << ", [" << pars.primary_vertex_tracks << "]";
     out << ", [" << pars.secondary_vertices << "]";
+    return out;
+  }
+
+  // *** medium 2.0 ***
+  std::ostream& operator<<(std::ostream& out,
+			   const CombinedSecondaryTrack& pars) {
+    out << "{" << pars.track << "}, {" << pars.vertex << "}";
+    return out;
+  }
+  std::ostream& operator<<(std::ostream& out,
+			   const h5::vector<CombinedSecondaryTrack>& tracks)
+  {
+    size_t n_trk = tracks.size();
+    for (size_t iii = 0; iii < n_trk; iii++) {
+      const auto& trk = tracks.at(iii);
+      out << "{" << trk << "}";
+      if (iii != (n_trk - 1)) out << ", ";
+    }
+    return out;
+  }
+  std::ostream& operator<<(std::ostream& out, const VLSuperJet& pars) {
+    out << pars.jet_parameters;
+    out << ", {" << pars.tracking << "}, {" << pars.vertex << "}";
+    out << ", [" << pars.primary_vertex_tracks << "]";
+    out << ", [" << pars.secondary_vertex_tracks << "]";
     return out;
   }
 }

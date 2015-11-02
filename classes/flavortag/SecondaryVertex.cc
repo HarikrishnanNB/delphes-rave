@@ -19,6 +19,5 @@ void SecondaryVertex::clear() {
   eFrac = -1;
   mass = -1;
   config = "null";
-  tracks.clear();
   tracks_along_jet.clear();
 }

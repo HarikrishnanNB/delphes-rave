@@ -458,20 +458,19 @@ namespace {
     out_vert.dphi = phi_mpi_pi(vertex_phi, jet.Phi());
     out_vert.deta = out_vert.Eta() - jet.Eta();
 
-    out_vert.tracks = delphes_tracks(vert);
     out_vert.tracks_along_jet = get_tracks_along_jet(
-      out_vert.tracks, jet, threshold);
+      delphes_tracks(vert), jet, threshold);
     return out_vert;
   }
   int get_n_shared(const std::vector<SecondaryVertex>& vertices) {
     std::set<Candidate*> tracks;
     std::set<Candidate*> shared;
     for (const auto& vx: vertices) {
-      for (const auto& wt_trk: vx.tracks) {
-	if (tracks.count(wt_trk.second) ) {
-	  shared.insert(wt_trk.second);
+      for (const auto& trk: vx.tracks_along_jet) {
+	if (tracks.count(trk.delphes_track) ) {
+	  shared.insert(trk.delphes_track);
 	}
-	tracks.insert(wt_trk.second);
+	tracks.insert(trk.delphes_track);
       }
     }
     return shared.size();
@@ -620,6 +619,7 @@ namespace {
       track.pt = trk->Momentum.Pt();
       track.dphi = phi_mpi_pi(params.phi, jet.Phi());
       track.deta = trk->Momentum.Eta() - jet.Eta();
+      track.delphes_track = trk;
       sv_trk.push_back(track);
     }
     return sv_trk;

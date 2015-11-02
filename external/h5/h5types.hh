@@ -14,6 +14,7 @@
 namespace h5 {
   H5::DataType type(int);
   H5::DataType type(double);
+  H5::DataType type(float);
   template <typename T>
   H5::DataType type(const h5::vector<T>&) {
     const auto subtype = type(T());

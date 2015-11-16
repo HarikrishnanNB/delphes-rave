@@ -407,7 +407,7 @@ void ClusterSequence::_initialise_and_run_no_decant () {
 
 
 // these needs to be defined outside the class definition.
-bool ClusterSequence::_first_time = true;
+bool ClusterSequence::_first_time = false;
 LimitedWarning ClusterSequence::_exclusive_warnings;
 
 

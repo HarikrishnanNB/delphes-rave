@@ -48,6 +48,13 @@ namespace {
     if (lastdot == std::string::npos) return filename;
     return filename.substr(0, lastdot);
   }
+
+  // util functions
+  std::vector<out::VertexTrack>
+  get_sorted_primary_tracks(Candidate& jet);
+
+  std::vector<out::CombinedSecondaryTrack>
+  get_sorted_secondary_tracks(Candidate& jet);
 }
 
 //------------------------------------------------------------------------------
@@ -220,6 +227,13 @@ namespace out {
     vertex(vx)
   {
   }
+  CombinedSecondaryTrack::CombinedSecondaryTrack(
+    const VertexTrack& tk,
+    const ::SecondaryVertex& vx):
+    track(tk),
+    vertex(vx)
+  {
+  }
   bool operator<(const CombinedSecondaryTrack& t1,
 		 const CombinedSecondaryTrack& t2) {
     return t1.track < t2.track;
@@ -231,41 +245,24 @@ namespace out {
     vertex(jet.hlSvx)
   {
     // sort primary tracks
-    std::vector<VertexTrack> sorted_tracks;
-    for (const auto& trk: jet.primaryVertexTracks) {
-      sorted_tracks.push_back(trk);
-    }
-    std::sort(sorted_tracks.begin(), sorted_tracks.end());
-    primary_vertex_tracks = sorted_tracks;
+    primary_vertex_tracks = get_sorted_primary_tracks(jet);
 
     // Filter secondary tracks
-    //
-    // When vertices are formed with the AVR method, low weight tracks
-    // from the first vertex are reassigned to the following vertex,
-    // but not removed from the first vertex. We have to go through
-    // the vertices in reverse order and keep track of tracks which
-    // have already been used to avoid double counting.
-    std::map<Candidate*, double> used;
-    int n_overlap = 0;
-    std::vector<CombinedSecondaryTrack> sorted_secondary_tracks;
-    for (auto vx = jet.secondaryVertices.crbegin();
-    	 vx != jet.secondaryVertices.crend(); vx++) {
-      for (const auto& trk: vx->tracks_along_jet) {
-	if (!used.count(trk.delphes_track)) {
-	  sorted_secondary_tracks.emplace_back(trk, *vx);
-	  used.emplace(trk.delphes_track, trk.weight);
-	} else {
-	  // std::cout << "rejected " << trk.weight << " for "
-	  // 	    << used.at(trk.delphes_track) << std::endl;
-	  n_overlap++;
-	}
-      }
+    secondary_vertex_tracks = get_sorted_secondary_tracks(jet);
+  }
+
+  JetTracks::JetTracks(Candidate& jet):
+    jet_parameters(jet),
+    tracking(jet.hlTrk),
+    vertex(jet.hlSvx)
+  {
+    for (const auto& track: get_sorted_primary_tracks(jet)) {
+      auto combined = CombinedSecondaryTrack(track, jet.primaryVertex);
+      all_tracks.push_back(combined);
     }
-    // std::cout << "used: " << used.size() << " removed: " << n_overlap
-    // 	      << std::endl;
-    std::sort(sorted_secondary_tracks.begin(),
-	      sorted_secondary_tracks.end());
-    secondary_vertex_tracks = sorted_secondary_tracks;
+    for (const auto& track: get_sorted_secondary_tracks(jet)) {
+      all_tracks.push_back(track);
+    }
   }
 
   // ____________________________________________________________________
@@ -399,7 +396,7 @@ void HDF5Writer::Process()
     const auto& mom = jet->Momentum;
     if (mom.Pt() < fPTMin || std::abs(mom.Eta()) > fAbsEtaMax) continue;
     if (m_output_stream.is_open()) {
-      m_output_stream << out::VLSuperJet(*jet) << "\n";
+      m_output_stream << out::JetTracks(*jet) << "\n";
     }
     if (m_hl_jet_buffer) m_hl_jet_buffer->push_back(*jet);
     if (m_ml_jet_buffer) m_ml_jet_buffer->push_back(*jet);
@@ -534,5 +531,58 @@ namespace out {
     out << ", [" << pars.primary_vertex_tracks << "]";
     out << ", [" << pars.secondary_vertex_tracks << "]";
     return out;
+  }
+
+  std::ostream& operator<<(std::ostream& out,
+                           const JetTracks& pars) {
+    out << pars.jet_parameters;
+    out << ", {" << pars.tracking << "}, {" << pars.vertex << "}";
+    out << ", [" << pars.all_tracks << "]";
+    return out;
+  }
+}
+
+// utility functions
+namespace {
+  std::vector<out::VertexTrack>
+  get_sorted_primary_tracks(Candidate& jet) {
+    using namespace out;
+    std::vector<VertexTrack> sorted_tracks;
+    for (const auto& trk: jet.primaryVertexTracks) {
+      sorted_tracks.push_back(trk);
+    }
+    std::sort(sorted_tracks.begin(), sorted_tracks.end());
+    return sorted_tracks;
+  }
+
+  std::vector<out::CombinedSecondaryTrack>
+  get_sorted_secondary_tracks(Candidate& jet) {
+    // When vertices are formed with the AVR method, low weight tracks
+    // from the first vertex are reassigned to the following vertex,
+    // but not removed from the first vertex. We have to go through
+    // the vertices in reverse order and keep track of tracks which
+    // have already been used to avoid double counting.
+    using namespace out;
+    std::map<Candidate*, double> used;
+    int n_overlap = 0;
+    std::vector<CombinedSecondaryTrack> sorted_secondary_tracks;
+    for (auto vx = jet.secondaryVertices.crbegin();
+    	 vx != jet.secondaryVertices.crend(); vx++) {
+      for (const auto& trk: vx->tracks_along_jet) {
+        if (!used.count(trk.delphes_track)) {
+          sorted_secondary_tracks.emplace_back(trk, *vx);
+          used.emplace(trk.delphes_track, trk.weight);
+        } else {
+          // std::cout << "rejected " << trk.weight << " for "
+          // 	    << used.at(trk.delphes_track) << std::endl;
+          n_overlap++;
+        }
+      }
+    }
+    // std::cout << "used: " << used.size() << " removed: " << n_overlap
+    // 	      << std::endl;
+    std::sort(sorted_secondary_tracks.begin(),
+	      sorted_secondary_tracks.end());
+    return sorted_secondary_tracks;
   }
 }

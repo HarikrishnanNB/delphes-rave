@@ -61,9 +61,10 @@ void ExRootTask::Exec(Option_t *option)
 {
   if(option == kINIT)
   {
-    cout << left;
-    cout << setw(30) << "** INFO: initializing module";
-    cout << setw(25) << GetName() << endl;
+    std::ostream sout(fConfReader->GetOutStreamBuffer());
+    sout << left;
+    sout << setw(30) << "** INFO: initializing module";
+    sout << setw(25) << GetName() << endl;
     Init();
   }
   else if(option == kPROCESS)

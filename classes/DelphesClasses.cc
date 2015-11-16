@@ -297,7 +297,10 @@ void Candidate::Copy(TObject &obj) const
   object.Xd = Xd;
   object.Yd = Yd;
   object.Zd = Zd;
+  object.primaryVertexTracks = primaryVertexTracks;
   object.secondaryVertices = secondaryVertices;
+  object.hlSecVxTracks = hlSecVxTracks;
+  object.primaryVertex = primaryVertex;
   object.hlSvx = hlSvx;
   object.hlTrk = hlTrk;
   object.truthVertices = truthVertices;
@@ -457,7 +460,10 @@ void Candidate::Clear(Option_t* option)
    trkPar[i] = 0;
   for(int i=0;i<15;i++)
    trkCov[i] = 0;
+  primaryVertexTracks.clear();
   secondaryVertices.clear();
+  primaryVertex.clear();
+  hlSecVxTracks.clear();
   truthVertices.clear();
   hlSvx = HighLevelSvx();
   hlTrk = HighLevelTracking();

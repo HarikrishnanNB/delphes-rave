@@ -18,6 +18,7 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 #include <signal.h>
@@ -78,6 +79,7 @@ int main(int argc, char *argv[])
     cout << " output_file - output file in ROOT format," << endl;
     cout << " input_file(s) - input file(s) in STDHEP format," << endl;
     cout << " with no input_file, or when input_file is -, read standard input." << endl;
+    cout << " when input_file is -, also suppress all output" << endl;
     return 1;
   }
 
@@ -103,7 +105,18 @@ int main(int argc, char *argv[])
 
     branchEvent = treeWriter->NewBranch("Event", LHEFEvent::Class());
 
-    confReader = new ExRootConfReader;
+    bool pipe_mode = argc > 3 && strncmp(argv[3], "-", 2) == 0;
+
+    std::ofstream black_hole("/dev/null");
+    std::streambuf* buf;
+    if (pipe_mode) {
+      buf = black_hole.rdbuf();
+    } else {
+      buf = cout.rdbuf();
+    }
+    std::ostream sout(buf);
+
+    confReader = new ExRootConfReader(sout.rdbuf());
     confReader->ReadFile(argv[1]);
 
     maxEvents = confReader->GetInt("::MaxEvents", 0);
@@ -139,13 +152,13 @@ int main(int argc, char *argv[])
 
       if(i == argc || strncmp(argv[i], "-", 2) == 0)
       {
-        cout << "** Reading standard input" << endl;
+        sout << "** Reading standard input" << endl;
         inputFile = stdin;
         length = -1;
       }
       else
       {
-        cout << "** Reading " << argv[i] << endl;
+        sout << "** Reading " << argv[i] << endl;
         inputFile = fopen(argv[i], "r");
 
         if(inputFile == NULL)
@@ -204,12 +217,14 @@ int main(int argc, char *argv[])
 
           readStopWatch.Start();
         }
-        progressBar.Update(ftello(inputFile), eventCounter);
+        if (!pipe_mode) progressBar.Update(ftello(inputFile), eventCounter);
       }
 
       fseek(inputFile, 0L, SEEK_END);
-      progressBar.Update(ftello(inputFile), eventCounter, kTRUE);
-      progressBar.Finish();
+      if (!pipe_mode) {
+	progressBar.Update(ftello(inputFile), eventCounter, kTRUE);
+	progressBar.Finish();
+      }
 
       if(inputFile != stdin) fclose(inputFile);
 
@@ -220,7 +235,7 @@ int main(int argc, char *argv[])
     modularDelphes->FinishTask();
     treeWriter->Write();
 
-    cout << "** Exiting..." << endl;
+    sout << "** Exiting..." << endl;
 
     delete reader;
     delete modularDelphes;

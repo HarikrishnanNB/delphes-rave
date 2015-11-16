@@ -643,6 +643,9 @@ public:
   std::vector<SecondaryVertexTrack> primaryVertexTracks;
   std::vector<SecondaryVertex> secondaryVertices;
   std::vector<SecondaryVertexTrack> hlSecVxTracks;
+  // sloppy reuse of the secondary vertex structure for some primary
+  // vertex info
+  SecondaryVertex primaryVertex;
   HighLevelSvx hlSvx;
   HighLevelSvx mlSvx;
   // track-based b-tagging

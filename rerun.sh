@@ -25,4 +25,4 @@ if [[ -f $OUTPATH ]] ; then
     mv $OUTPATH ${OLDDIR}/$(date +%F-%R)-$OUTNAME
 fi
 
-gunzip $INNAME -c | ./DelphesSTDHEP $CARD $OUTPATH -
+gunzip $INNAME -c | ./DelphesSTDHEP $CARD $OUTPATH

@@ -24,12 +24,16 @@ static Tcl_ObjCmdProc ModuleObjCmdProc;
 
 //------------------------------------------------------------------------------
 
-ExRootConfReader::ExRootConfReader() :
-  fTclInterp(0)
+ExRootConfReader::ExRootConfReader(std::streambuf* buf) :
+  fTclInterp(0),
+  fOutstream(std::cout.rdbuf())
 {
   fTclInterp = Tcl_CreateInterp();
 
   Tcl_CreateObjCommand(fTclInterp, "module", ModuleObjCmdProc, this, 0);
+  if (buf) {
+    fOutstream.rdbuf(buf);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -170,17 +174,21 @@ void ExRootConfReader::AddModule(const char *className, const char *moduleName)
 
   if(itMoudles != fModules.end())
   {
-    cout << "** WARNING: module '" << moduleName << "' is already configured.";
-    cout << " Only first entry will be used." << endl;
+    fOutstream << "** WARNING: module '" << moduleName << "' is already configured.";
+    fOutstream << " Only first entry will be used." << endl;
   }
   else
   {
     fModules.insert(make_pair(moduleName, className));
-    cout << left;
-    cout << setw(30) << "** INFO: adding module";
-    cout << setw(25) << className;
-    cout << setw(25) << moduleName << endl;
+    fOutstream << left;
+    fOutstream << setw(30) << "** INFO: adding module";
+    fOutstream << setw(25) << className;
+    fOutstream << setw(25) << moduleName << endl;
   }
+}
+
+std::streambuf* ExRootConfReader::GetOutStreamBuffer() {
+  return fOutstream.rdbuf();
 }
 
 //------------------------------------------------------------------------------

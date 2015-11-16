@@ -13,6 +13,7 @@
 
 #include <map>
 #include <utility>
+#include <ostream>
 
 struct Tcl_Obj;
 struct Tcl_Interp;
@@ -46,7 +47,7 @@ class ExRootConfReader : public TNamed
 public:
   typedef std::map<TString, TString> ExRootTaskMap;
 
-  ExRootConfReader();
+  ExRootConfReader(std::streambuf* = 0);
   ~ExRootConfReader();
 
   void ReadFile(const char *fileName);
@@ -62,11 +63,15 @@ public:
 
   void AddModule(const char *className, const char *moduleName);
 
+  std::streambuf* GetOutStreamBuffer();
+
 private:
 
   Tcl_Interp *fTclInterp; //!
 
   ExRootTaskMap fModules; //!
+
+  std::ostream fOutstream;
 
   ClassDef(ExRootConfReader, 1)
 };

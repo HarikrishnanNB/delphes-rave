@@ -186,7 +186,9 @@ namespace out {
 
   struct CombinedSecondaryTrack {
     CombinedSecondaryTrack(const SecondaryVertexTrack&,
-			   const ::SecondaryVertex&);
+                           const ::SecondaryVertex&);
+    CombinedSecondaryTrack(const VertexTrack&,
+                           const ::SecondaryVertex&);
     CombinedSecondaryTrack() = default;
     VertexTrack track;
     SecondaryVertex vertex;
@@ -194,9 +196,9 @@ namespace out {
   H5::CompType type(CombinedSecondaryTrack);
   std::ostream& operator<<(std::ostream&, const CombinedSecondaryTrack&);
   std::ostream& operator<<(std::ostream&,
-			   const h5::vector<CombinedSecondaryTrack>&);
+                           const h5::vector<CombinedSecondaryTrack>&);
   bool operator<(const CombinedSecondaryTrack&,
-		 const CombinedSecondaryTrack&);
+                 const CombinedSecondaryTrack&);
   H5::CompType type(CombinedSecondaryTrack);
 
   struct VLSuperJet {
@@ -212,6 +214,19 @@ namespace out {
   };
   std::ostream& operator<<(std::ostream&, const VLSuperJet&);
   H5::CompType type(VLSuperJet);
+
+  // ******************** medium 2.1 objects ********************
+  // combine all the tracks into one array
+  struct JetTracks {
+    JetTracks(Candidate& jet);
+    JetTracks() = default;
+    JetParameters jet_parameters;
+    HighLevelTracking tracking;
+    HighLevelSecondaryVertex vertex;
+
+    h5::vector<CombinedSecondaryTrack> all_tracks;
+  };
+  std::ostream& operator<<(std::ostream&, const JetTracks&);
 }
 
 #else  // CINT include dummy

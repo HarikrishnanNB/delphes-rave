@@ -49,7 +49,7 @@
 
 #include <algorithm>
 #include <stdexcept>
-#include <iostream>
+#include <ostream>
 #include <memory>
 
 namespace {
@@ -117,6 +117,9 @@ void IPCovSmearing::Init()
   etabins.push_back(2.25);
   etabins.push_back(2.7);
 
+
+  std::ostream sout(GetConfReader()->GetOutStreamBuffer());
+
   const int pt_bin_max = ptbins.size();
   const int eta_bins_max = etabins.size();
   for (int ipt = -1 ; ipt < pt_bin_max; ipt++) {
@@ -130,8 +133,8 @@ void IPCovSmearing::Init()
 	fSmearingMatrices[ipt][ieta] = cov.llt().matrixL();
 
       } catch (std::invalid_argument&) {
-	std::cout << "** INFO: no smearing defined for pt-eta "
-		  << ipt << " " << ieta << std::endl;
+	sout << "** INFO: no smearing defined for pt-eta "
+	     << ipt << " " << ieta << std::endl;
       }
     }
   }
@@ -151,10 +154,11 @@ void IPCovSmearing::Init()
 
 void IPCovSmearing::Finish()
 {
+  std::ostream sout(GetConfReader()->GetOutStreamBuffer());
   if(fItInputArray) delete fItInputArray;
   if (fNBinMisses) {
-    std::cout << "PROBLEM: " << fNBinMisses << "bin misses in track smearing"
-	      << std::endl;
+    sout << "PROBLEM: " << fNBinMisses << "bin misses in track smearing"
+	 << std::endl;
   }
 }
 
